@@ -9,7 +9,7 @@ dependencies = {
     'lua >= 5.1',
     'checks >= 3.0.0',
     'errors >= 2.1.0-1',
-    'cartridge = scm-1',
+    'cartridge',
 }
 
 description = {

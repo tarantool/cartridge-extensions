@@ -1,21 +1,21 @@
 stages:
     - test
   
-  .test-opensource: &test-opensource
-    stage: test
-    tags:
-      - docker
-    image: centos:7
-    before_script:
-      - curl -s https://packagecloud.io/install/repositories/tarantool/$TARANTOOL_REPO/script.rpm.sh | bash
-      - yum -y install git gcc cmake tarantool tarantool-devel
-      - tarantool -V
-      - tarantoolctl rocks install luatest 0.5.0
-    script:
-      - tarantoolctl rocks make
-      - .rocks/bin/luatest
-  
-  test-opensource-2.x:
-    <<: *test-opensource
-    variables:
-      TARANTOOL_REPO: "2_4"
+.test-opensource: &test-opensource
+  stage: test
+  tags:
+    - docker
+  image: centos:7
+  before_script:
+    - curl -s https://packagecloud.io/install/repositories/tarantool/$TARANTOOL_REPO/script.rpm.sh | bash
+    - yum -y install git gcc cmake tarantool tarantool-devel
+    - tarantool -V
+    - tarantoolctl rocks install luatest 0.5.0
+  script:
+    - tarantoolctl rocks make
+    - .rocks/bin/luatest
+
+test-opensource-2.x:
+  <<: *test-opensource
+  variables:
+    TARANTOOL_REPO: "2_4"
