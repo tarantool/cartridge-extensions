@@ -8,7 +8,8 @@ stages:
   image: centos:7
   before_script:
     - curl -s https://packagecloud.io/install/repositories/tarantool/$TARANTOOL_REPO/script.rpm.sh | bash
-    - yum -y install git gcc cmake tarantool tarantool-devel unzip
+    - curl -sL https://rpm.nodesource.com/setup_8.x | bash
+    - yum -y install git gcc cmake tarantool tarantool-devel unzip nodejs
     - tarantool -V
     - tarantoolctl rocks install luatest 0.5.0
   script:
