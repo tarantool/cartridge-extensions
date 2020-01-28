@@ -14,7 +14,7 @@ stages:
     - tarantoolctl rocks install luatest 0.5.0
   script:
     - tarantoolctl rocks make
-    - .rocks/bin/luatest
+    - .rocks/bin/luatest -v
 
 test-opensource-2.x:
   <<: *test-opensource
