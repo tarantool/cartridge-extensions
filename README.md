@@ -6,8 +6,7 @@ All `extensions/*.lua` files will be loaded as Lua modules.
 They'll be accessible through
 
 ```lua
-local extensions = require('cartridge').service_get('extensions')
-local banking = extensions.get('banking')
+local banking = require('extensions.banking')
 ```
 
 Also `extensions/config.yml` describes how to export those modules in
