@@ -1,4 +1,6 @@
+local json = require('json')
 local fio = require('fio')
+local http_client = require('http.client')
 local t = require('luatest')
 local checks = require('checks')
 local g = t.group()
@@ -87,8 +89,21 @@ function g.test_banking()
 
     srv.net_box:call('transfer_money', {1, 2, 20})
 
+    http_client.post(string.format('localhost:%s/customer_add', srv.http_port), json.encode({
+        customer_id = '3',
+        fullname = 'Artur',
+    }))
+    http_client.post(string.format('localhost:%s/account_add', srv.http_port), json.encode({
+        customer_id = '3',
+        account_id = '3',
+        name = 'default'
+    }))
+
+    srv.net_box:call('transfer_money', {1, 3, 30})
+
     local accounts = srv.net_box.space.account:select()
-    t.assert_equals(accounts[1], {1, 1, 'default', -20})
+    t.assert_equals(accounts[1], {1, 1, 'default', -50})
     t.assert_equals(accounts[2], {2, 2, 'default', 20})
-    t.assert_equals(#accounts, 2)
+    t.assert_equals(accounts[3], {3, 3, 'default', 30})
+    t.assert_equals(#accounts, 3)
 end

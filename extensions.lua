@@ -1,6 +1,7 @@
 local checks = require('checks')
 local errors = require('errors')
 
+local httpd = require('cartridge').service_get('httpd')
 local vars = require('cartridge.vars').new('cartridge.roles.extensions')
 
 local RequireExtensionError = errors.new_class('RequireExtensionError')
@@ -8,12 +9,14 @@ local ExtensionConfigError = errors.new_class('ExtensionConfigError')
 
 vars:new('loaded', {})
 vars:new('exports', {})
+vars:new('http_exports', {})
 
 local function process_config(conf)
     checks('table')
     local ret = {
         loaded = {},
         exports = {},
+        http_exports = {}
     }
 
     local not_loaded = {}
@@ -149,6 +152,22 @@ local function process_config(conf)
         end
 
         for _, event in ipairs(fconf.events) do
+            if event.http == nil then -- luacheck: ignore 542
+                -- do nothing
+            elseif ret.exports[event.http.path] ~= nil then
+                return nil, ExtensionConfigError:new(
+                    "Invalid extensions config: " ..
+                    "collision of http event '%s'" ..
+                    " to handle function '%s'",
+                    event.http.path, fname
+                )
+            else
+                ret.http_exports[event.http.path] = {
+                    method = event.http.method,
+                    func = fn
+                }
+            end
+
             if event.binary == nil then -- luacheck: ignore 542
                 -- do nothing
             elseif ret.exports[event.binary.path] ~= nil then
@@ -184,6 +203,24 @@ local function validate_config(conf_new, _)
     return true
 end
 
+local function remove_unactual_routes(routes, to_remove)
+    for i = 1, #to_remove do
+        routes[to_remove[i]] = nil
+    end
+
+    local j = 0
+    for i = 1, #routes do
+        if routes[i] ~= nil then
+            j = j + 1
+            routes[j] = routes[i]
+        end
+    end
+
+    for i = j + 1, #routes do
+        routes[i] = nil
+    end
+end
+
 local function apply_config(conf)
     checks('table')
 
@@ -200,6 +237,18 @@ local function apply_config(conf)
         rawset(_G, fun_name, nil)
     end
 
+    if httpd ~= nil then
+        local to_remove = {}
+        for i, route in ipairs(httpd.routes) do
+            local old_export = vars.http_exports[route.path] or vars.http_exports[route.path .. '/']
+            if old_export and old_export.method == route.method then
+                table.insert(to_remove, i)
+            end
+        end
+
+        remove_unactual_routes(httpd.routes, to_remove)
+    end
+
     -- load new extensions
     for mod_name, mod in pairs(c.loaded) do
         package.loaded[mod_name] = mod
@@ -208,8 +257,15 @@ local function apply_config(conf)
         rawset(_G, fun_name, fun)
     end
 
+    if httpd ~= nil then
+        for path, details in pairs(c.http_exports) do
+            httpd:route({ path = path, method = details.method}, details.func)
+        end
+    end
+
     vars.loaded = c.loaded
     vars.exports = c.exports
+    vars.http_exports = c.http_exports
 end
 
 return {

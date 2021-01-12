@@ -7,11 +7,23 @@ functions:
     events:
     - binary: {path: customer_add}
 
+  http_customer_add:
+    module: extensions.banking
+    handler: http_customer_add
+    events:
+    - http: {path: /customer_add, method: POST}
+
   account_add:
     module: extensions.banking
     handler: account_add
     events:
     - binary: {path: account_add}
+
+  http_account_add:
+    module: extensions.banking
+    handler: http_account_add
+    events:
+    - http: {path: /account_add, method: POST}
 
   transfer_money:
     module: extensions.banking
