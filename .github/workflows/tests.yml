@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    name: Run tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tarantool-version: ["1.10", "2.6"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+
+      - name: Install build requirements
+        run: |
+          sudo apt -y update
+          sudo apt -y install git gcc cmake unzip nodejs
+      - name: Install Tarantool
+        uses: tarantool/setup-tarantool@v1
+        with:
+          tarantool-version: '${{ matrix.tarantool-version }}'
+
+      - name: Stop and disable Taranool 1.10 example service
+        if: matrix.tarantool-version == '1.10'
+        run: |
+          sudo systemctl stop tarantool@example
+          sudo systemctl disable tarantool@example
+          sudo rm -rf /lib/systemd/system/tarantool@.service
+      - name: Install tests requirements
+        run: |
+          tarantoolctl rocks install luatest 0.5.0
+          tarantoolctl rocks make
+      - name: Log versions
+        run: |
+          tarantool --version
+      - name: Run tests
+        run: .rocks/bin/luatest -v
