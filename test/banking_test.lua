@@ -1,4 +1,3 @@
-local log = require('log')
 local fio = require('fio')
 local t = require('luatest')
 local checks = require('checks')
