@@ -1,6 +1,3 @@
-#!/usr/bin/env tarantool
-
-local log = require('log')
 local checks = require('checks')
 local errors = require('errors')
 
@@ -152,7 +149,7 @@ local function process_config(conf)
         end
 
         for _, event in ipairs(fconf.events) do
-            if event.binary == nil then
+            if event.binary == nil then -- luacheck: ignore 542
                 -- do nothing
             elseif ret.exports[event.binary.path] ~= nil then
                 return nil, ExtensionConfigError:new(
