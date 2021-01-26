@@ -8,12 +8,14 @@ local ExtensionConfigError = errors.new_class('ExtensionConfigError')
 
 vars:new('loaded', {})
 vars:new('exports', {})
+vars:new('http_exports', {})
 
 local function process_config(conf)
     checks('table')
     local ret = {
         loaded = {},
         exports = {},
+        http_exports = {}
     }
 
     local not_loaded = {}
@@ -89,6 +91,8 @@ local function process_config(conf)
             type(functions)
         )
     end
+
+    local httpd = require('cartridge').service_get('httpd')
 
     for fname, fconf in pairs(functions) do
         if type(fname) ~= 'string' then
@@ -188,6 +192,72 @@ local function process_config(conf)
 
             ::continue::
         end
+
+        for i, event in ipairs(fconf.events) do
+            if event.http == nil then
+                goto continue
+            end
+
+            if type(event.http) ~= 'table' then
+                return nil, ExtensionConfigError:new(
+                    "Invalid extensions config: bad field" ..
+                    " functions[%q].events[%d].http (table expected, got %s)",
+                    fname, i, type(event.http)
+                )
+            elseif type(event.http.path) ~= 'string' then
+                return nil, ExtensionConfigError:new(
+                    "Invalid extensions config: bad field" ..
+                    " functions[%q].events[%d].http.path (string expected, got %s)",
+                    fname, i, type(event.http.path)
+                )
+            elseif type(event.http.method) ~= 'string' then
+                return nil, ExtensionConfigError:new(
+                    "Invalid extensions config: bad field" ..
+                    " functions[%q].events[%d].http.method (string expected, got %s)",
+                    fname, i, type(event.http.method)
+                )
+            end
+
+            -- https://github.com/tarantool/http/blob/1.1.0/http/server.lua#L905
+            local path = event.http.path
+            if not path:endswith('/') then path = path .. '/' end
+            if not path:startswith('/') then path = '/' .. path end
+
+            local method = string.upper(event.http.method)
+
+            local name = method .. '#' .. path
+
+            if ret.http_exports[name] ~= nil then
+                return nil, ExtensionConfigError:new(
+                    "Invalid extensions config: " ..
+                    "collision of http event %s '%s'" ..
+                    " to handle function '%s'",
+                    event.http.method, event.http.path, fname
+                )
+            end
+
+            local match = nil
+            if httpd ~= nil then
+                match = httpd:match(method, path)
+            end
+
+            if match and vars.http_exports[match.endpoint.name] == nil then
+                return nil, ExtensionConfigError:new(
+                    "Invalid extensions config: " ..
+                    "can't override http route %s '%s'" ..
+                    " to handle function '%s'",
+                    event.http.method, event.http.path, fname
+                )
+            else
+                ret.http_exports[name] = {
+                    method = method,
+                    path = path,
+                    func = fn,
+                }
+            end
+
+            ::continue::
+        end
     end
 
     return ret
@@ -218,6 +288,23 @@ local function apply_config(conf)
         rawset(_G, fun_name, nil)
     end
 
+    local httpd = require('cartridge').service_get('httpd')
+
+    if httpd ~= nil then
+        for r_name, _ in pairs(vars.http_exports) do
+            local n = httpd.iroutes[r_name]
+            httpd.iroutes[r_name] = nil
+            table.remove(httpd.routes, n)
+        end
+
+        -- Update httpd.iroutes numeration
+        for n, r in ipairs(httpd.routes) do
+            if r.name then
+                httpd.iroutes[r.name] = n
+            end
+        end
+    end
+
     -- load new extensions
     for mod_name, mod in pairs(c.loaded) do
         package.loaded[mod_name] = mod
@@ -226,8 +313,19 @@ local function apply_config(conf)
         rawset(_G, fun_name, fun)
     end
 
+    if httpd ~= nil then
+        for name, r in pairs(c.http_exports) do
+            httpd:route({
+                path = r.path,
+                method = r.method,
+                name = name
+            }, r.func)
+        end
+    end
+
     vars.loaded = c.loaded
     vars.exports = c.exports
+    vars.http_exports = c.http_exports
 end
 
 return {
