@@ -200,9 +200,7 @@ function g.test_export_errors()
         functions = {F = {
             module = 'extensions.main',
             handler = 'operate',
-            events = {{
-                binary = {path = 'operate'}
-            }}
+            events = {}
         }}
     })
 
@@ -239,13 +237,53 @@ function g.test_export_errors()
         }}
     )
 
+    t.assert_equals(h.get_state(g.srv), 'RolesConfigured')
+end
+
+function g.test_binary_export_errors()
+    h.set_sections(g.srv, {{
+        filename = 'extensions/main.lua',
+        content = 'return {operate = function() end}',
+    }})
+
+    t.assert_error_msg_equals(
+        error_prefix .. 'bad field functions["F"].events[1].binary' ..
+        ' (table expected, got string)',
+        h.set_sections, g.srv, {{
+            filename = 'extensions/config.yml',
+            content = yaml.encode({
+                functions = {F = {
+                    module = 'extensions.main',
+                    handler = 'operate',
+                    events = {
+                        {binary = 'not-a-table'},
+                    },
+                }},
+            }),
+        }}
+    )
+
+    t.assert_error_msg_equals(
+        error_prefix .. 'bad field functions["F"].events[1].binary.path' ..
+        ' (string expected, got table)',
+        h.set_sections, g.srv, {{
+            filename = 'extensions/config.yml',
+            content = yaml.encode({
+                functions = {F = {
+                    module = 'extensions.main',
+                    handler = 'operate',
+                    events = {
+                        {binary = {path = {'not-a-string'}}},
+                    },
+                }},
+            }),
+        }}
+    )
+
     t.assert_error_msg_equals(
         error_prefix .. "collision of binary event 'operate'" ..
         " to handle function 'F'",
         h.set_sections, g.srv, {{
-            filename = 'extensions/main.lua',
-            content = 'return {operate = function() end}',
-        }, {
             filename = 'extensions/config.yml',
             content = yaml.encode({
                 functions = {F = {
@@ -264,9 +302,6 @@ function g.test_export_errors()
         error_prefix .. "can't override global 'box'" ..
         " to handle function 'F'",
         h.set_sections, g.srv, {{
-            filename = 'extensions/main.lua',
-            content = 'return {operate = function() end}',
-        }, {
             filename = 'extensions/config.yml',
             content = yaml.encode({
                 functions = {F = {
@@ -281,4 +316,8 @@ function g.test_export_errors()
     )
 
     t.assert_equals(h.get_state(g.srv), 'RolesConfigured')
+    h.set_sections(g.srv, {{
+        filename = 'extensions/main.lua',
+        content = box.NULL,
+    }})
 end
