@@ -291,9 +291,9 @@ local function apply_config(conf)
     local httpd = require('cartridge').service_get('httpd')
 
     if httpd ~= nil then
-        for r_name, _ in pairs(vars.http_exports) do
-            local n = httpd.iroutes[r_name]
-            httpd.iroutes[r_name] = nil
+        for name, _ in pairs(vars.http_exports) do
+            local n = assert(httpd.iroutes[name])
+            httpd.iroutes[name] = nil
             table.remove(httpd.routes, n)
         end
 
@@ -328,8 +328,13 @@ local function apply_config(conf)
     vars.http_exports = c.http_exports
 end
 
+local function stop()
+    return apply_config({})
+end
+
 return {
     role_name = 'extensions',
     validate_config = validate_config,
     apply_config = apply_config,
+    stop = stop,
 }
