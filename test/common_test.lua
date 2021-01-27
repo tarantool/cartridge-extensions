@@ -321,3 +321,120 @@ function g.test_binary_export_errors()
         content = box.NULL,
     }})
 end
+
+function g.test_http_export_errors()
+    h.set_sections(g.srv, {{
+        filename = 'extensions/main.lua',
+        content = 'return {operate = function() end}',
+    }})
+
+    t.assert_error_msg_equals(
+        error_prefix .. 'bad field' ..
+        ' functions["F"].events[1].http' ..
+        ' (table expected, got string)',
+        h.set_sections, g.srv, {{
+            filename = 'extensions/config.yml',
+            content = yaml.encode({
+                functions = {F = {
+                    module = 'extensions.main',
+                    handler = 'operate',
+                    events = {
+                        {http = 'not-a-table'},
+                    },
+                }},
+            }),
+        }}
+    )
+
+    t.assert_error_msg_equals(
+        error_prefix .. 'bad field' ..
+        ' functions["F"].events[1].http.path' ..
+        ' (string expected, got nil)',
+        h.set_sections, g.srv, {{
+            filename = 'extensions/config.yml',
+            content = yaml.encode({
+                functions = {F = {
+                    module = 'extensions.main',
+                    handler = 'operate',
+                    events = {
+                        {http = {path = nil, method = 'GET'}},
+                    },
+                }},
+            }),
+        }}
+    )
+
+    t.assert_error_msg_equals(
+        error_prefix .. 'bad field' ..
+        ' functions["F"].events[1].http.method' ..
+        ' (string expected, got nil)',
+        h.set_sections, g.srv, {{
+            filename = 'extensions/config.yml',
+            content = yaml.encode({
+                functions = {F = {
+                    module = 'extensions.main',
+                    handler = 'operate',
+                    events = {
+                        {http = {path = 'foo', method = nil}},
+                    },
+                }},
+            }),
+        }}
+    )
+
+    t.assert_error_msg_equals(
+        -- The message spelling is important
+        error_prefix .. "collision of http event GeT '/foo'" ..
+        " to handle function 'F'",
+        h.set_sections, g.srv, {{
+            filename = 'extensions/config.yml',
+            content = yaml.encode({
+                functions = {F = {
+                    module = 'extensions.main',
+                    handler = 'operate',
+                    events = {
+                        {http = {path = 'foo/', method = 'GeT'}},
+                        {http = {path = '/foo', method = 'GeT'}},
+                    },
+                }},
+            }),
+        }}
+    )
+
+    t.assert_error_msg_equals(
+        -- The message spelling is important
+        error_prefix .. "collision of http event PoSt 'foo'" ..
+        " to handle function 'F'",
+        h.set_sections, g.srv, {{
+            filename = 'extensions/config.yml',
+            content = yaml.encode({
+                functions = {F = {
+                    module = 'extensions.main',
+                    handler = 'operate',
+                    events = {
+                        {http = {path = 'foo', method = 'pOsT'}},
+                        {http = {path = 'foo', method = 'PoSt'}},
+                    },
+                }},
+            }),
+        }}
+    )
+
+    t.assert_error_msg_equals(
+        -- GET '/admin/*any' route is already registered by cartridge
+        error_prefix .. "can't override http route GET 'admin/smth/'" ..
+        " to handle function 'F'",
+        h.set_sections, g.srv, {{
+            filename = 'extensions/config.yml',
+            content = yaml.encode({
+                functions = {F = {
+                    module = 'extensions.main',
+                    handler = 'operate',
+                    events = {
+                        {http = {path = 'admin/smth/', method = 'GET'}},
+                    },
+                }},
+            }),
+        }}
+    )
+end
