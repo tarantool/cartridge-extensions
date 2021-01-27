@@ -148,10 +148,26 @@ local function process_config(conf)
             )
         end
 
-        for _, event in ipairs(fconf.events) do
-            if event.binary == nil then -- luacheck: ignore 542
-                -- do nothing
-            elseif ret.exports[event.binary.path] ~= nil then
+        for i, event in ipairs(fconf.events) do
+            if event.binary == nil then
+                goto continue
+            end
+
+            if type(event.binary) ~= 'table' then
+                return nil, ExtensionConfigError:new(
+                    "Invalid extensions config: bad field" ..
+                    " functions[%q].events[%d].binary (table expected, got %s)",
+                    fname, i, type(event.binary)
+                )
+            elseif type(event.binary.path) ~= 'string' then
+                return nil, ExtensionConfigError:new(
+                    "Invalid extensions config: bad field" ..
+                    " functions[%q].events[%d].binary.path (string expected, got %s)",
+                    fname, i, type(event.binary.path)
+                )
+            end
+
+            if ret.exports[event.binary.path] ~= nil then
                 return nil, ExtensionConfigError:new(
                     "Invalid extensions config: " ..
                     "collision of binary event '%s'" ..
@@ -169,6 +185,8 @@ local function process_config(conf)
             else
                 ret.exports[event.binary.path] = fn
             end
+
+            ::continue::
         end
     end
 
