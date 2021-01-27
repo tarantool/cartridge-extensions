@@ -143,7 +143,7 @@ local function process_config(conf)
             return nil, ExtensionConfigError:new(
                 "Invalid extensions config: " ..
                 "no function '%s' in module '%s'" ..
-                " to handle '%s'",
+                " to handle function '%s'",
                 fconf.handler, fconf.module, fname
             )
         end

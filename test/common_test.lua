@@ -181,7 +181,7 @@ function g.test_functions_errors()
 
     t.assert_error_msg_equals(
         error_prefix .. "no function 'cat' in module 'box'" ..
-        " to handle 'x'",
+        " to handle function 'x'",
         h.set_sections, g.srv, {{
             filename = 'extensions/config.yml',
             content = yaml.encode({
@@ -217,7 +217,7 @@ function g.test_export_errors()
 
     t.assert_error_msg_equals(
         error_prefix .. "no function 'operate' in module 'extensions.main'" ..
-        " to handle 'F'",
+        " to handle function 'F'",
         h.set_sections, g.srv, {{
             filename = 'extensions/config.yml',
             content = extensions_cfg,
@@ -229,7 +229,7 @@ function g.test_export_errors()
 
     t.assert_error_msg_equals(
         error_prefix .. "no function 'operate' in module 'extensions.main'" ..
-        " to handle 'F'",
+        " to handle function 'F'",
         h.set_sections, g.srv, {{
             filename = 'extensions/config.yml',
             content = extensions_cfg,
