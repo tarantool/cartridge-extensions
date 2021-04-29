@@ -1,10 +1,9 @@
 local fio = require('fio')
-local t = require('luatest')
 local checks = require('checks')
+local t = require('luatest')
+local h = require('test.helper')
 local g = t.group()
 
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
 local utils = require('cartridge.utils')
 
 local function lstree(path)
@@ -26,17 +25,14 @@ local function lstree(path)
 end
 
 g.before_all = function()
-    g.cluster = helpers.Cluster:new({
+    g.cluster = h.Cluster:new({
         datadir = fio.tempdir(),
         use_vshard = false,
-        server_command = test_helper.server_command,
+        server_command = h.server_command,
         replicasets = {{
             alias = 'loner',
-            uuid = helpers.uuid('a'),
             roles = {'extensions'},
-            servers = {{
-                instance_uuid = helpers.uuid('a', 'a', 1)
-            }},
+            servers = 1,
         }},
     })
 
@@ -59,16 +55,7 @@ g.before_all = function()
         })
     end
 
-    g.cluster.main_server:graphql({
-        query = [[
-            mutation($sections: [ConfigSectionInput!]) {
-                cluster {
-                    config(sections: $sections) {}
-                }
-            }
-        ]],
-        variables = {sections = sections},
-    })
+    h.set_sections(g.cluster.main_server, sections)
 end
 
 g.after_all = function()
