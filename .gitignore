@@ -1,4 +1,5 @@
 .DS_Store
 .vscode
 .rocks
+/tmp
 /build.luarocks

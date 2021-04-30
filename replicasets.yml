@@ -1,0 +1,7 @@
+main:
+  instances:
+  - main
+  roles:
+  - extensions
+  - vshard-router
+  - vshard-storage
