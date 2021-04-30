@@ -17,7 +17,9 @@ function helper.set_sections(srv, sections)
     return srv:graphql({
         query = [[
             mutation($sections: [ConfigSectionInput!]) {
-                cluster {config(sections: $sections) {}}
+                cluster {config(sections: $sections) {
+                    filename content
+                }}
             }
         ]],
         variables = {sections = sections},
