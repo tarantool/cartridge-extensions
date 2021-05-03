@@ -1,0 +1,8 @@
+cartridge-extensions:
+  cluster_cookie: "admin"
+  memtx_memory: 33554432 # 32 MiB
+  vinyl_memory: 0
+
+cartridge-extensions.main:
+  advertise_uri: localhost:3301
+  http_port: 8081

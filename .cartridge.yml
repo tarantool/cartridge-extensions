@@ -1,0 +1,5 @@
+cfg: instances.yml
+script: test/srv_basic.lua
+run-dir: './tmp/run'
+data-dir: './tmp/data'
+stateboard: false
