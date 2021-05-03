@@ -94,7 +94,13 @@ function g.test_reload()
         local httpd = require('cartridge').service_get('httpd')
         return #httpd.routes
     ]]
+    local get_triggers_count = [[
+        local utils = require('cartridge.utils')
+        local twophase_vars = require('cartridge.vars').new('cartridge.twophase')
+        return utils.table_count(twophase_vars.on_patch_triggers)
+    ]]
     local routes_count = g.srv.net_box:eval(get_routes_count)
+    local triggers_count = g.srv.net_box:eval(get_triggers_count)
 
     t.assert_equals(
         {g.srv.net_box:call('package.loaded.cartridge.reload_roles')},
@@ -113,5 +119,9 @@ function g.test_reload()
     t.assert_equals(
         g.srv.net_box:eval(get_routes_count),
         routes_count
+    )
+    t.assert_equals(
+        g.srv.net_box:eval(get_triggers_count),
+        triggers_count
     )
 end

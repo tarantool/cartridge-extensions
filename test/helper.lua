@@ -13,6 +13,14 @@ function helper.table_find_by_attr(tbl, key, value)
     end
 end
 
+function helper.get_sections(srv)
+    return srv:graphql({
+        query = [[{
+            cluster {config {filename content}}
+        }]],
+    }).data.cluster.config
+end
+
 function helper.set_sections(srv, sections)
     return srv:graphql({
         query = [[

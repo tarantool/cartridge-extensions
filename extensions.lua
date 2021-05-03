@@ -1,6 +1,7 @@
 local checks = require('checks')
 local errors = require('errors')
 
+local twophase = require('cartridge.twophase')
 local vars = require('cartridge.vars').new('cartridge.roles.extensions')
 
 local RequireExtensionError = errors.new_class('RequireExtensionError')
@@ -9,6 +10,53 @@ local ExtensionConfigError = errors.new_class('ExtensionConfigError')
 vars:new('loaded', {})
 vars:new('exports', {})
 vars:new('http_exports', {})
+vars:new('on_patch_trigger', nil)
+vars:new('example', nil)
+
+local _config_example = [[## Example:
+# functions:
+
+#   hello_http:
+#     module: extensions.example
+#     handler: hello_http
+#     events:
+#     - http:
+#         path: /hello
+#         method: any
+#     # curl -v http://<HOST>:<HTTP_PORT>/hello?name=Cartridge
+#     # Hello, Cartridge!
+]]
+
+local _module_example = [[-- local M = {}
+
+-- function M.hello_http(req)
+--     local name = req:param('name') or '%username%'
+--     return {
+--         status = 200,
+--         body = 'Hello, ' .. name .. '!\n'
+--     }
+-- end
+
+-- return M
+]]
+
+vars.example = {
+    ['extensions/config.yml'] = _config_example,
+    ['extensions/example.lua'] = _module_example,
+}
+
+-- Be gentle with cartridge.reload_roles
+twophase.on_patch(nil, vars.on_patch_trigger)
+function vars.on_patch_trigger(conf_new)
+    if conf_new:get_readonly('extensions/config') ~= nil then
+        return
+    end
+
+    for k, v in pairs(vars.example) do
+        conf_new:set_plaintext(k, v)
+    end
+end
+twophase.on_patch(vars.on_patch_trigger, nil)
 
 local function process_config(conf)
     checks('table')
