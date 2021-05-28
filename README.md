@@ -1,12 +1,12 @@
 ## Cartridge-extensions
 
-This module represents new role `extensions` for cartridge.
+This module represents new role `extensions` for Cartridge.
 
 All `extensions/*.lua` files will be loaded as Lua modules.
 They'll be accessible through
 
 ```lua
-local banking = require('extensions.banking')
+local mymodule = require('extensions.mymodule')
 ```
 
 ### How to export my functions?
@@ -25,15 +25,15 @@ Here is a little example:
 ```yml
 functions:
   transfer_money:
-    module: banking
+    module: extensions.banking
     handler: transfer_money
     events:
     - binary:
-      # It'll assign _G.__transfer_money = banking.transfer_money
+        # It'll assign _G.__transfer_money = banking.transfer_money
         path: __transfer_money
 
   get_balance:
-    module: banking
+    module: extensions.banking
     handler: http_get_balance
     events:
     - http:
