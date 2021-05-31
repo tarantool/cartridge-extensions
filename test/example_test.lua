@@ -33,7 +33,49 @@ local function uncomment(text, prefix)
     return table.concat(lines, '\n')
 end
 
+local function grab_example_cfg(server)
+    local sections = {}
+    for _, s in ipairs(h.get_sections(server)) do
+        require('log').info(s.filename)
+        if s.filename:match('^extensions/.*$') then
+            sections[s.filename] = s.content
+        end
+    end
+    return sections
+end
+
 function g.test_example_config()
+    local cfg_key = 'extensions/config.yml'
+    local code_key = 'extensions/example.lua'
+
+    local examples = g.srv.net_box:eval([[
+        return require('cartridge.vars').new('cartridge.roles.extensions').example
+    ]])
+
+    t.assert_equals(grab_example_cfg(g.srv), { [cfg_key] = examples[cfg_key] })
+
+    -- test set example.lua works
+    h.set_sections(g.srv, {{
+        filename = code_key,
+        content = examples[code_key]
+    }})
+    t.assert_equals(grab_example_cfg(g.srv), examples)
+
+    -- test unset example.lua works
+    h.set_sections(g.srv, {{
+        filename = code_key,
+        content = nil
+    }})
+    t.assert_equals(grab_example_cfg(g.srv), { [cfg_key] = examples[cfg_key] })
+
+    -- test change example.lua works
+    examples[code_key] = '\n-- require("log").info("smth")\n' .. examples[code_key]
+    h.set_sections(g.srv, {{
+        filename = code_key,
+        content = examples[code_key]
+    }})
+    t.assert_equals(grab_example_cfg(g.srv), examples)
+
     local sections = {}
     for _, s in ipairs(h.get_sections(g.srv)) do
         if s.filename:match('^extensions/.+%.yml$') then
