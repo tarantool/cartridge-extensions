@@ -48,12 +48,11 @@ vars.example = {
 -- Be gentle with cartridge.reload_roles
 twophase.on_patch(nil, vars.on_patch_trigger)
 function vars.on_patch_trigger(conf_new)
-    if conf_new:get_readonly('extensions/config') ~= nil then
-        return
-    end
-
     for k, v in pairs(vars.example) do
-        conf_new:set_plaintext(k, v)
+        local section_yml = conf_new:get_plaintext(k)
+        if section_yml == nil or section_yml == '' then
+            conf_new:set_plaintext(k, v)
+        end
     end
 end
 twophase.on_patch(vars.on_patch_trigger, nil)
