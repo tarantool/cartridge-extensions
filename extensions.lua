@@ -40,31 +40,21 @@ local _module_example = [[-- local M = {}
 -- return M
 ]]
 
-vars.example_sections = {
-    config = 'extensions/config.yml',
-    example = 'extensions/example.lua',
-}
-
-vars.example = {
-    [vars.example_sections.config] = _config_example,
-    [vars.example_sections.example] = _module_example,
-}
-
 -- Be gentle with cartridge.reload_roles
 twophase.on_patch(nil, vars.on_patch_trigger)
 function vars.on_patch_trigger(conf_new)
-    local extension_cfg_txt = conf_new:get_plaintext(vars.example_sections.config)
-    if extension_cfg_txt == nil or extension_cfg_txt == '' then
-        conf_new:set_plaintext(
-            vars.example_sections.config, vars.example[vars.example_sections.config]
-        )
+    local config_txt = conf_new:get_plaintext('extensions/config.yml')
+    if config_txt == nil or config_txt == '' then
+        conf_new:set_plaintext('extensions/config.yml', _config_example)
+    else
+        -- Don't interfere other sections
+        -- if `config.yml` already exists.
+        return
     end
 
-    local extension_example_txt = conf_new:get_plaintext(vars.example_sections.example)
-    if extension_example_txt == '' then
-        conf_new:set_plaintext(
-            vars.example_sections.example, vars.example[vars.example_sections.example]
-        )
+    local module_txt = conf_new:get_plaintext('extensions/example.lua')
+    if module_txt == nil or module_txt == '' then
+        conf_new:set_plaintext('extensions/example.lua', _module_example)
     end
 end
 twophase.on_patch(vars.on_patch_trigger, nil)
