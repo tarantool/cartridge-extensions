@@ -40,20 +40,21 @@ local _module_example = [[-- local M = {}
 -- return M
 ]]
 
-vars.example = {
-    ['extensions/config.yml'] = _config_example,
-    ['extensions/example.lua'] = _module_example,
-}
-
 -- Be gentle with cartridge.reload_roles
 twophase.on_patch(nil, vars.on_patch_trigger)
 function vars.on_patch_trigger(conf_new)
-    if conf_new:get_readonly('extensions/config') ~= nil then
+    local config_txt = conf_new:get_plaintext('extensions/config.yml')
+    if config_txt == nil or config_txt == '' then
+        conf_new:set_plaintext('extensions/config.yml', _config_example)
+    else
+        -- Don't interfere other sections
+        -- if `config.yml` already exists.
         return
     end
 
-    for k, v in pairs(vars.example) do
-        conf_new:set_plaintext(k, v)
+    local module_txt = conf_new:get_plaintext('extensions/example.lua')
+    if module_txt == nil or module_txt == '' then
+        conf_new:set_plaintext('extensions/example.lua', _module_example)
     end
 end
 twophase.on_patch(vars.on_patch_trigger, nil)

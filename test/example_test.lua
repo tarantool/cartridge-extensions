@@ -33,7 +33,45 @@ local function uncomment(text, prefix)
     return table.concat(lines, '\n')
 end
 
+function g.test_custom_config()
+    -- Ensure example.lua isn't overriden
+    t.assert_error_msg_equals(
+        '"localhost:13301": one',
+        h.set_sections, g.srv, {{
+            filename = 'extensions/config.yml',
+            content = box.NULL,
+        }, {
+            filename = 'extensions/example.lua',
+            content = 'error("one", 0)',
+        }}
+    )
+
+    -- Ensure example.lua can be removed
+    h.set_sections(g.srv, {{
+        filename = 'extensions/config.yml',
+        content = '# Draft config',
+    }, {
+        filename = 'extensions/example.lua',
+        content = box.NULL,
+    }})
+    t.assert_equals(
+        h.get_sections(g.srv),
+        {{
+            filename = 'extensions/config.yml',
+            content = '# Draft config',
+        }}
+    )
+end
+
 function g.test_example_config()
+    h.set_sections(g.srv, {{
+        filename = 'extensions/config.yml',
+        content = box.NULL,
+    }, {
+        filename = 'extensions/example.lua',
+        content = box.NULL,
+    }})
+
     local sections = {}
     for _, s in ipairs(h.get_sections(g.srv)) do
         if s.filename:match('^extensions/.+%.yml$') then
