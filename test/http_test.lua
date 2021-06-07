@@ -94,26 +94,35 @@ function g.test_removal()
                 say_meow = {
                     module = 'extensions.main',
                     handler = 'say_meow',
-                    events = {{http = {path = '/meow', method = 'get'}}}
+                    events = {
+                        {http = {path = '/meow1', method = 'get'}},
+                        {http = {path = '/meow2', method = 'get'}},
+                        {http = {path = '/meow3', method = 'get'}},
+                        {http = {path = '/meow4', method = 'get'}},
+                    }
                 }
             }
         })
     }})
 
-    t.assert_covers(
-        g.srv:http_request('get', '/meow'),
-        {status = 200, body = 'meow'}
-    )
+    for i = 1, 4 do
+        t.assert_covers(
+            g.srv:http_request('get', '/meow' .. tostring(i)),
+            {status = 200, body = 'meow'}
+        )
+    end
 
     h.set_sections(g.srv, {{
         filename = 'extensions/config.yml',
         content = 'functions: {}',
     }})
 
-    t.assert_covers(
-        g.srv:http_request('get', '/meow', {raise = false}),
-        {status = 404}
-    )
+    for i = 1, 4 do
+        t.assert_covers(
+            g.srv:http_request('get', '/meow' .. tostring(i), {raise = false}),
+            {status = 404}
+        )
+    end
 end
 
 function g.test_segregation()

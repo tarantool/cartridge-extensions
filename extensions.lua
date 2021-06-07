@@ -344,12 +344,12 @@ local function apply_config(conf)
             local n = assert(httpd.iroutes[name])
             httpd.iroutes[name] = nil
             table.remove(httpd.routes, n)
-        end
 
-        -- Update httpd.iroutes numeration
-        for n, r in ipairs(httpd.routes) do
-            if r.name then
-                httpd.iroutes[r.name] = n
+            -- Update httpd.iroutes numeration
+            for n, r in ipairs(httpd.routes) do
+                if r.name then
+                    httpd.iroutes[r.name] = n
+                end
             end
         end
     end
