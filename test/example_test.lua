@@ -54,7 +54,7 @@ function g.test_custom_config()
         filename = 'extensions/example.lua',
         content = box.NULL,
     }})
-    t.assert_equals(
+    t.assert_items_include(
         h.get_sections(g.srv),
         {{
             filename = 'extensions/config.yml',
