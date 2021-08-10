@@ -5,6 +5,10 @@ on:
     branches: [master]
     tags: ['*']
 
+env:
+  # Skip building cartridge WebUI
+  CMAKE_DUMMY_WEBUI: true
+
 jobs:
   publish-scm-1:
     if: github.ref == 'refs/heads/master'
