@@ -4,6 +4,10 @@ on:
   push:
   workflow_dispatch:
 
+env:
+  # Skip building cartridge WebUI
+  CMAKE_DUMMY_WEBUI: true
+
 jobs:
   test:
     strategy:
@@ -24,7 +28,7 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: cache-rocks-${{ matrix.runs-on }}-01
+          key: cache-rocks-${{ matrix.runs-on }}-02
       -
         run: tarantoolctl rocks install luacheck
         if: steps.cache-rocks.outputs.cache-hit != 'true'
