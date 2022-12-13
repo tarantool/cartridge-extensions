@@ -14,17 +14,17 @@ jobs:
       fail-fast: false
       matrix:
         runs-on: [ubuntu-20.04]
-        tarantool: ['2.5', '2.6', '2.7', '2.8']
+        tarantool: ['2.5', '2.6', '2.7', '2.8', '2.10']
     runs-on: ${{ matrix.runs-on }}
     steps:
-      - uses: actions/checkout@master
-      - uses: tarantool/setup-tarantool@v1
+      - uses: actions/checkout@v3
+      - uses: tarantool/setup-tarantool@v2
         with:
           tarantool-version: '${{ matrix.tarantool }}'
 
       # Setup luatest and luacheck
       - name: Cache rocks
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-rocks
         with:
           path: .rocks/
