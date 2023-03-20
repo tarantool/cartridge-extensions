@@ -7,6 +7,10 @@ local vars = require('cartridge.vars').new('cartridge.roles.extensions')
 local RequireExtensionError = errors.new_class('RequireExtensionError')
 local ExtensionConfigError = errors.new_class('ExtensionConfigError')
 
+-- Сontains the module version.
+-- Requires manual update in case of release commit.
+local VERSION = '1.1.0'
+
 vars:new('loaded', {})
 vars:new('exports', {})
 vars:new('http_exports', {})
@@ -386,4 +390,5 @@ return {
     validate_config = validate_config,
     apply_config = apply_config,
     stop = stop,
+    _VERSION = VERSION,
 }
